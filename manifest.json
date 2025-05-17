@@ -1,4 +1,14 @@
 {
+  "display_override": ["standalone", "minimal-ui"],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot1.png",
+      "sizes": "1280x800",
+      "type": "image/png"
+    }
+  ]
+}
+{
   "name": "University Routine Manager",
   "short_name": "RoutineMgr",
   "description": "Manage and view university class schedules",

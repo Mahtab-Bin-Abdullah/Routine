@@ -10,6 +10,20 @@
     * {
       box-sizing: border-box;
     }
+    <script>
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('SW registered');
+        })
+        .catch(err => {
+          console.log('SW registration failed: ', err);
+        });
+    });
+  }
+</script>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(to right, #f6f9fc, #e0f7fa);
@@ -148,6 +162,7 @@
     </form>
 
     <div class="actions">
+      <button id="install-button" onclick="installPWA()" style="display: none;">📲 Install App</button>
       <button onclick="downloadPDF()">📄 Save as PDF</button>
       <button onclick="downloadImage()">🖼️ Save as Image</button>
       <button id="install-button" onclick="installPWA()" style="display: none;">📲 Install App</button>

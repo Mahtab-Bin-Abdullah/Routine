@@ -1,0 +1,20 @@
+{
+  "name": "University Routine Manager",
+  "short_name": "Routine",
+  "start_url": "routine.html",
+  "display": "standalone",
+  "background_color": "#f6f9fc",
+  "theme_color": "#00796b",
+  "icons": [
+    {
+      "src": "routine.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "repeat.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

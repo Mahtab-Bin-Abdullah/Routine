@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>University Routine Manager</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f6f9fc, #e0f7fa);
+      padding: 30px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #00796b;
+      margin-bottom: 30px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 25px 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    label {
+      flex: 1 1 200px;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+    input, select {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      border: none;
+      margin-top: 20px;
+    }
+    button.submit {
+      background-color: #00796b;
+      color: white;
+    }
+    button.submit:hover {
+      background-color: #004d40;
+    }
+    .actions {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .actions button {
+      margin: 5px;
+      background-color: #1976d2;
+      color: white;
+    }
+    .actions button:hover {
+      background-color: #0d47a1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #b2dfdb;
+      color: #004d40;
+    }
+    tr:nth-child(even) {
+      background-color: #f1f1f1;
+    }
+    button.edit {
+      background-color: #ffa000;
+      color: white;
+    }
+    button.edit:hover {
+      background-color: #ff6f00;
+    }
+    button.delete {
+      background-color: #d32f2f;
+      color: white;
+    }
+    button.delete:hover {
+      background-color: #b71c1c;
+    }
+    @media (max-width: 768px) {
+      form {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>📚 University Routine Manager</h1>
+
+  <div class="container">
+    <form id="routine-form">
+      <label>Course Code:
+        <input type="text" id="course" required>
+      </label>
+      <label>Faculty:
+        <input type="text" id="faculty" required>
+      </label>
+      <label>Section:
+        <input type="text" id="section" required>
+      </label>
+      <label>Room No:
+        <input type="text" id="room" required>
+      </label>
+      <label>Day:
+        <select id="day" required>
+          <option value="">--Select--</option>
+          <option>Monday</option>
+          <option>Tuesday</option>
+          <option>Wednesday</option>
+          <option>Thursday</option>
+          <option>Friday</option>
+          <option>Saturday</option>
+          <option>Sunday</option>
+        </select>
+      </label>
+      <label>Time:
+        <input type="text" id="time" placeholder="e.g. 10:00–11:00" required>
+      </label>
+      <button type="submit" class="submit">Add to Routine</button>
+    </form>
+
+    <div class="actions">
+      <button onclick="downloadPDF()">📄 Save as PDF</button>
+      <button onclick="downloadImage()">🖼️ Save as Image</button>
+    </div>
+
+    <div class="actions">
+      <label for="filter-day" style="margin-right: 10px;">📅 Filter by Day:</label>
+      <select id="filter-day" onchange="filterByDay()">
+        <option value="">All Days</option>
+        <option>Monday</option>
+        <option>Tuesday</option>
+        <option>Wednesday</option>
+        <option>Thursday</option>
+        <option>Friday</option>
+        <option>Saturday</option>
+        <option>Sunday</option>
+      </select>
+    </div>
+
+    <div id="routine-table-wrapper">
+      <table id="routine-table">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Course</th>
+            <th>Faculty</th>
+            <th>Section</th>
+            <th>Room</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- jsPDF + html2canvas from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    const form = document.getElementById('routine-form');
+    const tableBody = document.querySelector('#routine-table tbody');
+
+    let routineData = JSON.parse(localStorage.getItem('routineData')) || [];
+
+    function saveToLocalStorage() {
+      localStorage.setItem('routineData', JSON.stringify(routineData));
+    }
+
+    function renderTable(data = routineData) {
+      tableBody.innerHTML = '';
+      data.forEach((entry, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${entry.day}</td>
+          <td>${entry.time}</td>
+          <td>${entry.course}</td>
+          <td>${entry.faculty}</td>
+          <td>${entry.section}</td>
+          <td>${entry.room}</td>
+          <td>
+            <button class="edit" onclick="editEntry(${index})">Edit</button>
+            <button class="delete" onclick="deleteEntry(${index})">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function editEntry(index) {
+      const entry = routineData[index];
+      document.getElementById('course').value = entry.course;
+      document.getElementById('faculty').value = entry.faculty;
+      document.getElementById('section').value = entry.section;
+      document.getElementById('room').value = entry.room;
+      document.getElementById('day').value = entry.day;
+      document.getElementById('time').value = entry.time;
+
+      routineData.splice(index, 1);
+      saveToLocalStorage();
+      renderTable();
+    }
+
+    function deleteEntry(index) {
+      if (confirm('Are you sure you want to delete this entry?')) {
+        routineData.splice(index, 1);
+        saveToLocalStorage();
+        renderTable();
+      }
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const course = document.getElementById('course').value.trim();
+      const faculty = document.getElementById('faculty').value.trim();
+      const section = document.getElementById('section').value.trim();
+      const room = document.getElementById('room').value.trim();
+      const day = document.getElementById('day').value;
+      const time = document.getElementById('time').value.trim();
+
+      const entry = { course, faculty, section, room, day, time };
+      routineData.push(entry);
+      saveToLocalStorage();
+      renderTable();
+      form.reset();
+    });
+
+    function filterByDay() {
+      const selectedDay = document.getElementById("filter-day").value;
+      const filteredData = selectedDay ? routineData.filter(entry => entry.day === selectedDay) : routineData;
+      renderTable(filteredData);
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const canvas = await html2canvas(document.getElementById('routine-table-wrapper'));
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'landscape' });
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+      pdf.save("Routine.pdf");
+    }
+
+    async function downloadImage() {
+      const canvas = await html2canvas(document.getElementById('routine-table-wrapper'));
+      const link = document.createElement('a');
+      link.download = 'Routine.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    // Initial render
+    renderTable();
+  </script>
+</body>
+</html>
